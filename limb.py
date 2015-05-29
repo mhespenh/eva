@@ -9,3 +9,7 @@ class Limb:
 
     def add_joint(self, joint):
         self.joints[joint.name] = joint
+
+    def shutdown(self):
+        for j in self.joints:
+            self.joints[j].shutdown()

@@ -10,11 +10,11 @@ class Joint:
         self._max_angle = max_angle
         self._min_angle = min_angle
         self._servo = servo.Servo(controller_id=controller_id,
-                                  input_id=servo_id)
+                                  servo_id=servo_id)
 
-    def set_angle(self, angle, speed=False):
-        if speed:
-            self._servo.set_velocity(speed)
+    def set_angle(self, angle, velocity=False):
+        if velocity:
+            self._servo.set_velocity(velocity)
         self._servo.set_target_angle(angle)
 
     def get_target_angle(self):
@@ -22,3 +22,6 @@ class Joint:
 
     def get_angle(self):
         return self._servo.get_angle()
+
+    def shutdown(self):
+        self._servo.shutdown()
