@@ -1,6 +1,7 @@
 import threading
 import time
 from Queue import Queue
+from Adafruit_PWM_Servo_Driver import PWM
 
 DEFAULT_ACCELERATION = 0.25
 DEFAULT_VELOCITY = 10
@@ -9,10 +10,13 @@ movement_queue = Queue()
 
 class ServoMovementController(object):
     do_shutdown = False
-    def __init__(self, controller_id, servo_id):
-        self.controller_id = controller_id
+    def __init__(self, controller_addr, servo_id, usec_max=2500, usec_min=500):
+        self._pwm = PWM(controller_addr, debug=True)
+        self._pwm.setPWMFreq(60)
         self.servo_id = servo_id
         self._angle = 0
+        self._usec_max = usec_max
+        self._usec_min = usec_min
         self.t = threading.Thread(target=self.run, args=())
         self.t.start()
 
@@ -37,8 +41,15 @@ class ServoMovementController(object):
                 self._angle -= float(m['velocity']/10.0)
                 if self._angle < m['target_angle']:
                     self._angle = m['target_angle']
-            print('Cur: %s\tTarget: %s' % (self._angle, m['target_angle']))
+
+            self._pwm.setPWM(self.servo_id, 0, int(self.angle_to_usec(self._angle)))
             time.sleep(1.0/m['velocity'])
+
+    def angle_to_usec(self, angle):
+        angleRange = (100 - 0)  
+        usecRange = ( self._usec_max - self._usec_min )  
+        angle = (((angle - 0) * usecRange) / angleRange) + self._usec_min
+        return angle/4
 
 
     def get_cur_angle(self):
@@ -55,16 +66,25 @@ class Servo(object):
     angle_max = 180
     angle_min = 0
 
-    def __init__(self, controller_id, servo_id,
+    def __init__(self, controller_addr, servo_id,
+                 usec_max=2200, usec_min=800,
                  acceleration=DEFAULT_ACCELERATION,
                  velocity=DEFAULT_VELOCITY):
         self.acceleration = acceleration
         self.velocity = velocity
-        self.movement_controller = ServoMovementController(controller_id=controller_id,
-                                                           servo_id=servo_id)
+        self.usec_max=usec_max
+        self.usec_min=usec_min
+        self.movement_controller = ServoMovementController(controller_addr=controller_addr,
+                                                           servo_id=servo_id,
+                                                           usec_max=usec_max, usec_min=usec_min)
+    def angle_to_usec(self, angle):
+        angleRange = (100 - 0)  
+        usecRange = ( self.usec_max - self._usec_min )  
+        angle = (((angle - 0) * usecRange) / angleRange) + self._usec_min
+        return angle/4.0
 
     def set_target_angle(self, angle):
-        if angle < self.angle_max and angle > self.angle_min:
+        if angle <= self.angle_max and angle >= self.angle_min:
             self.target_angle = angle
             movement = { 'target_angle': self.target_angle,
                          'velocity': self.velocity

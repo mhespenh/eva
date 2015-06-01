@@ -5,12 +5,14 @@ class Joint:
     _servo = None
     _max_angle = 180
     _min_angle = 0
-    def __init__(self, name, controller_id, servo_id, max_angle, min_angle):
+    def __init__(self, name, controller_addr, servo_id, usec_max, usec_min):
         self.name = name
-        self._max_angle = max_angle
-        self._min_angle = min_angle
-        self._servo = servo.Servo(controller_id=controller_id,
-                                  servo_id=servo_id)
+        self._usec_max = usec_max
+        self._usec_min = usec_min
+        self._servo = servo.Servo(controller_addr,\
+                                  servo_id,\
+                                  usec_max,\
+                                  usec_min)
 
     def set_angle(self, angle, velocity=False):
         if velocity:
